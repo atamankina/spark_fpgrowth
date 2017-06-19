@@ -47,20 +47,24 @@ public class FPGrowthPreprocess {
 		JavaRDD<String> data = input.filter((String row) -> !row.equals(header));
 
 	    //generate 2 element tuples
-		JavaRDD<Tuple2<String, String>> tuples = data
-	    		.map((String line) -> {
+		JavaRDD<Tuple2<String, String>> tuples = data.map(
+					(String line) -> {
 	    			String[] lines = line.split(",");
 	    			return new Tuple2<> (lines[0], lines[1]);
-	    		});
+	    			});
 
 		//map data to pairs
-		JavaPairRDD<String, String> pairs = data
-				.mapToPair((String line) -> {
+		JavaPairRDD<String, String> pairs = data.mapToPair(
+					(String line) -> {
 	    			String[] lines = line.split(",");
-	    			return new Tuple2<> (lines[0], lines[1]);});
+	    			return new Tuple2<> (lines[0], lines[1]);
+	    			});
 		
-
-		
+		//reduce pairs to transactions
+		JavaPairRDD<String, String> transactions = pairs.reduceByKey(
+					(String x, String y) ->
+					x + " " + y
+					);
 
 	}
 	

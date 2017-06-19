@@ -3,6 +3,7 @@
  */
 package com.example;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -30,8 +31,12 @@ public class FPGrowthPreprocess {
 	public static void main(String[] args) {
 		
 		String inputpath = "./data/OnlineRetailShort.csv";
-		String temppath = "./data/OnlineRetailTemp";
+		String datapath = "./data/OnlineRetailData";
+		String pairspath = "./data/OnlineRetailPairs";
+		String transtuplesspath = "./data/OnlineRetailTransTuples";
+		String transvaluesspath = "./data/OnlineRetailTransValues";
 		String transactionspath = "./data/OnlineRetailTrans";
+		String frequentitemspath = "./data/OnlineRetailFrequentItems";
 		
 		SparkConf conf = new SparkConf()
 				.setAppName("FPGrowth with Preprocessing")
@@ -46,13 +51,6 @@ public class FPGrowthPreprocess {
 		String header = input.first();
 		JavaRDD<String> data = input.filter((String row) -> !row.equals(header));
 
-	    //generate 2 element tuples
-		JavaRDD<Tuple2<String, String>> tuples = data.map(
-					(String line) -> {
-	    			String[] lines = line.split(",");
-	    			return new Tuple2<> (lines[0], lines[1]);
-	    			});
-
 		//map data to pairs
 		JavaPairRDD<String, String> pairs = data.mapToPair(
 					(String line) -> {
@@ -61,10 +59,33 @@ public class FPGrowthPreprocess {
 	    			});
 		
 		//reduce pairs to transactions
-		JavaPairRDD<String, String> transactions = pairs.reduceByKey(
+		JavaPairRDD<String, String> transactionTuples = pairs.reduceByKey(
 					(String x, String y) ->
 					x + " " + y
 					);
+		
+		//extract transaction values
+		JavaRDD<String> transactionValues = transactionTuples.values();
+		
+		//transform each transaction to a list of strings
+		JavaRDD<List<String>> transactions = transactionValues.map(
+					(String line) -> {
+					String[] lines = line.split(" ");
+					List<String> entries = new ArrayList<String>();
+				      for(int i = 0; i<= lines.length-1; i++){
+				    	  if(!entries.contains(lines[i])) entries.add(lines[i]);
+				      }
+				      return entries;
+					});
+		
+		//FPGrowth
+		FPGrowth fpg = new FPGrowth().setMinSupport(0.2).setNumPartitions(1);
+		FPGrowthModel<String> model = fpg.run(transactions);
+		JavaRDD<FPGrowth.FreqItemset<String>> frequentItems = model.freqItemsets().toJavaRDD();
+		
+		frequentItems.saveAsTextFile(frequentitemspath);
+		
+		
 
 	}
 	

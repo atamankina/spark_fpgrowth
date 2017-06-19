@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.DataFrameReader;
@@ -44,9 +45,21 @@ public class FPGrowthPreprocess {
 		//ignore first line in CSV
 		String header = input.first();
 		JavaRDD<String> data = input.filter((String row) -> !row.equals(header));
-	
-	 //   JavaRDD<Tuple2<String, String>> tuples = jsc.textFile(temppath).map();
+
+	    //generate 2 element tuples
+		JavaRDD<Tuple2<String, String>> tuples = data
+	    		.map((String line) -> {
+	    			String[] lines = line.split(",");
+	    			return new Tuple2<> (lines[0], lines[1]);
+	    		});
+
+		//map data to pairs
+		JavaPairRDD<String, String> pairs = data
+				.mapToPair((String line) -> {
+	    			String[] lines = line.split(",");
+	    			return new Tuple2<> (lines[0], lines[1]);});
 		
+
 		
 
 	}

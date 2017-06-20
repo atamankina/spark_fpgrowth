@@ -77,9 +77,9 @@ public class FPGrowthPreprocess {
 					(String line) -> {
 					String[] lines = line.split(" ");
 					List<String> entries = new ArrayList<String>();
-				      for(int i = 0; i<= lines.length-1; i++){
-				    	  if(!entries.contains(lines[i])) entries.add(lines[i]);
-				      }
+				        for(String item:lines){
+				    	    if(!entries.contains(item)) entries.add(item);
+				        }
 			        return entries;
 					});
 		//transactions.saveAsTextFile(transactionsPath);

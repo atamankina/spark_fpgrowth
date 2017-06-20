@@ -30,6 +30,7 @@ public class FPGrowthPreprocess {
 
 	public static void main(String[] args) {
 		
+		/** input and output paths */
 		String inputPath = "./data/OnlineRetailShort.csv";
 		String dataPath = "./data/OnlineRetailData";
 		String pairsPath = "./data/OnlineRetailPairs";
@@ -37,7 +38,8 @@ public class FPGrowthPreprocess {
 		String transValuesPath = "./data/OnlineRetailTransValues";
 		String transactionsPath = "./data/OnlineRetailTrans";
 		String frequentItemsPath = "./data/OnlineRetailFrequentItems";
-		
+				
+		/** create spark config and java context */
 		SparkConf conf = new SparkConf()
 				.setAppName("FPGrowth with Preprocessing")
 		//this config is only good for quick local testing, otherwise passed in command line
@@ -48,12 +50,12 @@ public class FPGrowthPreprocess {
 		//for testing small data set, one partition is used, should be changed for bigger data set
 		JavaRDD<String> input = jsc.textFile(inputPath, 1);
 		
-		/** ignore first line in CSV */
+		/** remove first line in CSV */
 		String header = input.first();
 		JavaRDD<String> data = input.filter((String row) -> !row.equals(header));
 		//data.saveAsTextFile(dataPath);
 
-		/** map data to pairs */
+		/** map data to pairs transaction id - item id */
 		JavaPairRDD<String, String> pairs = data.mapToPair(
 					(String line) -> {
 	    			String[] lines = line.split(",");
@@ -61,18 +63,17 @@ public class FPGrowthPreprocess {
 	    			});
 		//pairs.saveAsTextFile(pairsPath);
 		
-		/** reduce pairs to transactions */
+		/** reduce pairs to transactions by transaction id */
 		JavaPairRDD<String, String> transactionTuples = pairs.reduceByKey(
-					(String x, String y) ->
-					x + " " + y
+					(String x, String y) -> x + " " + y
 					);
 		//transactionTuples.saveAsTextFile(transTuplesPath);
 		
-		/** extract transaction values */
+		/** extract transaction values, remove transaction ids */
 		JavaRDD<String> transactionValues = transactionTuples.values();
 		//transactionValues.saveAsTextFile(transValuesPath);
 		
-		/** transform each transaction to a list of strings */
+		/** transform each transaction to a list of items */
 		JavaRDD<List<String>> transactions = transactionValues.map(
 					(String line) -> {
 					String[] lines = line.split(" ");
@@ -89,8 +90,10 @@ public class FPGrowthPreprocess {
 		FPGrowthModel<String> model = fpg.run(transactions);
 		JavaRDD<FPGrowth.FreqItemset<String>> frequentItems = model.freqItemsets().toJavaRDD();
 		
+		/** save the resulting frequent items to a text file */
 		frequentItems.saveAsTextFile(frequentItemsPath);
 		
+		/** stop java context */
 		jsc.stop();
 	}
 	

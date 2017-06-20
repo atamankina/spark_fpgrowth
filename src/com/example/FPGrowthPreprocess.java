@@ -44,13 +44,14 @@ public class FPGrowthPreprocess {
 				.setMaster("local[*]");
 		JavaSparkContext jsc = new JavaSparkContext(conf);
 		
-		/** take necessary CSV as input */		
-		JavaRDD<String> input = jsc.textFile(inputPath);
+		/** take necessary CSV as input */
+		//for testing small data set, one partition is used, should be changed for bigger data set
+		JavaRDD<String> input = jsc.textFile(inputPath, 1);
 		
 		/** ignore first line in CSV */
 		String header = input.first();
 		JavaRDD<String> data = input.filter((String row) -> !row.equals(header));
-		//data.saveAsTextFile(datapath);
+		//data.saveAsTextFile(dataPath);
 
 		/** map data to pairs */
 		JavaPairRDD<String, String> pairs = data.mapToPair(
@@ -58,18 +59,18 @@ public class FPGrowthPreprocess {
 	    			String[] lines = line.split(",");
 	    			return new Tuple2<> (lines[0], lines[1]);
 	    			});
-		//pairs.saveAsTextFile(pairspath);
+		//pairs.saveAsTextFile(pairsPath);
 		
 		/** reduce pairs to transactions */
 		JavaPairRDD<String, String> transactionTuples = pairs.reduceByKey(
 					(String x, String y) ->
 					x + " " + y
 					);
-		//transactionTuples.saveAsTextFile(transtuplesspath);
+		//transactionTuples.saveAsTextFile(transTuplesPath);
 		
 		/** extract transaction values */
 		JavaRDD<String> transactionValues = transactionTuples.values();
-		//transactionValues.saveAsTextFile(transvaluesspath);
+		//transactionValues.saveAsTextFile(transValuesPath);
 		
 		/** transform each transaction to a list of strings */
 		JavaRDD<List<String>> transactions = transactionValues.map(
@@ -81,7 +82,7 @@ public class FPGrowthPreprocess {
 				      }
 			        return entries;
 					});
-		//transactions.saveAsTextFile(transactionspath);
+		//transactions.saveAsTextFile(transactionsPath);
 		
 		/** FPGrowth */
 		FPGrowth fpg = new FPGrowth().setMinSupport(0.2).setNumPartitions(1);
@@ -90,6 +91,7 @@ public class FPGrowthPreprocess {
 		
 		frequentItems.saveAsTextFile(frequentItemsPath);
 		
+		jsc.stop();
 	}
 	
 }

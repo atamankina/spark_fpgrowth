@@ -4,21 +4,14 @@
 package com.example;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.DataFrameReader;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SQLContext;
-
 import scala.Tuple2;
 
-import org.apache.spark.mllib.fpm.AssociationRules;
 import org.apache.spark.mllib.fpm.FPGrowth;
 import org.apache.spark.mllib.fpm.FPGrowthModel;
 
@@ -88,10 +81,13 @@ public class FPGrowthPreprocess {
 		/** FPGrowth */
 		FPGrowth fpg = new FPGrowth().setMinSupport(0.2).setNumPartitions(1);
 		FPGrowthModel<String> model = fpg.run(transactions);
-		JavaRDD<FPGrowth.FreqItemset<String>> frequentItems = model.freqItemsets().toJavaRDD();
+/*		JavaRDD<FPGrowth.FreqItemset<String>> frequentItems = model.freqItemsets().toJavaRDD();
 		
-		/** save the resulting frequent items to a text file */
-		frequentItems.saveAsTextFile(frequentItemsPath);
+		*//** save the resulting frequent items to a text file *//*
+		frequentItems.saveAsTextFile(frequentItemsPath);*/
+		
+		List<FPGrowth.FreqItemset<String>> i = model.freqItemsets().toJavaRDD().collect();
+		System.out.println(i.toString());
 		
 		/** stop java context */
 		jsc.stop();

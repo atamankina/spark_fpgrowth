@@ -3,6 +3,8 @@
  */
 package com.example;
 
+import java.util.List;
+
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -33,15 +35,16 @@ public class Main {
 		mbt.setJsc(jsc);
 		
 		JavaRDD<String> transactions = mbt.transformToMarketBasketLines(inputPath, 1, 0, 1);
-		
+		JavaRDD<List<String>> trans = mbt.transformToMarketBasketLists(inputPath, 1, 0, 1);
 		//transactions.saveAsTextFile(transactionsPath);
 		
 		JavaRDD<String> synt = jsc.textFile(synthetic, 1);
 		
-		Eclat.runEclat(jsc, synt, 2);
+		//Eclat.runEclat(jsc, synt, 2);
 		//Apriori.runApriori(jsc, synt, 2);
+		FPGrowthRunner.runFPGrowth(trans, 0.2, 1, frequentItemsPath);
 		
-		
+		jsc.stop();
 
 	}
 

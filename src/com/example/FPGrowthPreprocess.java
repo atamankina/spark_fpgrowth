@@ -83,7 +83,7 @@ public class FPGrowthPreprocess {
 				        }
 			        return entries;
 					});
-		//transactions.saveAsTextFile(transactionsPath);
+		transactions.saveAsTextFile(transactionsPath);
 		
 		/** FPGrowth */
 		FPGrowth fpg = new FPGrowth().setMinSupport(0.2).setNumPartitions(1);

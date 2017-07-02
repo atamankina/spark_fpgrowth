@@ -18,6 +18,9 @@ import scala.Tuple2;
 import org.apache.spark.mllib.fpm.FPGrowth;
 import org.apache.spark.mllib.fpm.FPGrowthModel;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+
 /**
  * @author Galina Atamankina
  *
@@ -59,7 +62,7 @@ public class FPGrowthPreprocess {
 	    			String[] lines = line.split(",");
 	    			return new Tuple2<> (lines[0], lines[1]);
 	    			});
-		pairs.saveAsTextFile(pairsPath);
+		//pairs.saveAsTextFile(pairsPath);
 		
 /*		JavaRDD<String> allvalues = pairs.values();
 		allvalues.saveAsTextFile(pairsPath);*/
@@ -74,34 +77,41 @@ public class FPGrowthPreprocess {
 							).keys();
 		
 		/** create map of unique items and integer keys assigned to them*/
-		Map<String, Integer> valuesMap = uniqueValues.mapToPair(
-					(String value) -> {
-						Integer key = mapkey++;
-						return new Tuple2<>(value, key);
+		Map<String, String> valuesMap = uniqueValues.mapToPair(
+					(String key) -> {
+						Integer valInt = mapkey++;
+						String valString = valInt.toString();
+						return new Tuple2<>(key, valString);
 					}).collectAsMap();
-				
+		
+		 BiMap<String, String> biMap = HashBiMap.create();
+		 biMap.putAll(valuesMap);
+		 System.out.println("POST"+biMap.get("POST"));
+		 System.out.println("16"+biMap.inverse().get("16"));
+		
 		
 		/** create tuples transaction id - integer item id*/
-		JavaPairRDD<String, Integer> transactionKeys = data.mapToPair(
+		JavaPairRDD<String, String> transactionKeys = data.mapToPair(
 				(String line) ->{
 						String[] lines = line.split(",");
-						Integer key = valuesMap.get(lines[1]);
+						String key = valuesMap.get(lines[1]);
 		    			return new Tuple2<>(lines[0], key);	
 				});
 		
-		transactionKeys.saveAsTextFile(transTuplesPath);
+		transactionKeys.saveAsTextFile(pairsPath);
 		
-/*		*//** reduce pairs to transactions by transaction id *//*
-		JavaPairRDD<String, String> transactionTuples = pairs.reduceByKey(
+		
+		/** reduce pairs to transactions by transaction id */
+		JavaPairRDD<String, String> transactionTuples = transactionKeys.reduceByKey(
 					(String x, String y) -> x + " " + y
 					);
-		//transactionTuples.saveAsTextFile(transTuplesPath);
+		transactionTuples.saveAsTextFile(transTuplesPath);
 		
-		*//** extract transaction values, remove transaction ids *//*
+		/** extract transaction values, remove transaction ids */
 		JavaRDD<String> transactionValues = transactionTuples.values();
-		//transactionValues.saveAsTextFile(transValuesPath);
+		transactionValues.saveAsTextFile(transValuesPath);
 		
-		*//** transform each transaction to a list of items *//*
+		/** transform each transaction to a list of items */
 		JavaRDD<List<String>> transactions = transactionValues.map(
 					(String line) -> {
 					String[] lines = line.split(" ");
@@ -113,14 +123,14 @@ public class FPGrowthPreprocess {
 					});
 		//transactions.saveAsTextFile(transactionsPath);
 		
-		*//** FPGrowth *//*
+		/** FPGrowth */
 		FPGrowth fpg = new FPGrowth().setMinSupport(0.2).setNumPartitions(1);
 		FPGrowthModel<String> model = fpg.run(transactions);
 		JavaRDD<FPGrowth.FreqItemset<String>> frequentItems = model.freqItemsets().toJavaRDD();
 		
-		*//** save the resulting frequent items to a text file *//*
-		//frequentItems.saveAsTextFile(frequentItemsPath);
-		*/
+		/** save the resulting frequent items to a text file */
+		frequentItems.saveAsTextFile(frequentItemsPath);
+		
 
 		
 		/** stop java context */

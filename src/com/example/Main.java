@@ -36,13 +36,14 @@ public class Main {
 		
 		JavaRDD<String> transactions = mbt.transformToMarketBasketLines(inputPath, 1, 0, 1);
 		JavaRDD<List<String>> trans = mbt.transformToMarketBasketLists(inputPath, 1, 0, 1);
-		//transactions.saveAsTextFile(transactionsPath);
+		JavaRDD<String> transmapped = mbt.transformToMarketBasketLinesMapped(inputPath, 1, 0, 1);
+		//transmapped.saveAsTextFile(transactionsPath);
 		
 		JavaRDD<String> synt = jsc.textFile(synthetic, 1);
 		
-		//Eclat.runEclat(jsc, synt, 2);
-		//Apriori.runApriori(jsc, synt, 2);
-		FPGrowthRunner.runFPGrowth(trans, 0.2, 1, frequentItemsPath);
+		//Eclat.runEclat(jsc, transmapped, 1);
+		Apriori.runApriori(jsc, transmapped, 2);
+		//FPGrowthRunner.runFPGrowth(trans, 0.2, 1, frequentItemsPath);
 		
 		jsc.stop();
 

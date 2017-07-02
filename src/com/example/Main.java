@@ -21,7 +21,10 @@ public class Main {
 	public static void main(String[] args) {
 		
 		String inputPath = "./data/OnlineRetailShort.csv";
+		String pairsPath = "./data/OnlineRetailPairs";
+		String pairsPathMapped = "./data/OnlineRetailPairsMapped";
 		String transactionsPath = "./data/OnlineRetailTrans";
+		String transactionsMappedPath = "./data/OnlineRetailTransMapped";
 		String frequentItemsPath = "./data/OnlineRetailFrequentItems";
 		String synthetic = "./data/SyntheticData.txt";
 		
@@ -37,12 +40,18 @@ public class Main {
 		JavaRDD<String> transactions = mbt.transformToMarketBasketLines(inputPath, 1, 0, 1);
 		JavaRDD<List<String>> trans = mbt.transformToMarketBasketLists(inputPath, 1, 0, 1);
 		JavaRDD<String> transmapped = mbt.transformToMarketBasketLinesMapped(inputPath, 1, 0, 1);
-		//transmapped.saveAsTextFile(transactionsPath);
+		mbt.transformToTwoTuples(inputPath, 1, 0, 1).saveAsTextFile(pairsPath);
+		mbt.transformToTwoTuplesMapped(inputPath, 1, 0, 1).saveAsTextFile(pairsPathMapped);
+		
+		//mbt.countUniquValues(inputPath, 1, 1).saveAsTextFile(transactionsPath);
+		transactions.saveAsTextFile(transactionsPath);
+		transmapped.saveAsTextFile(transactionsMappedPath);
+		
 		
 		JavaRDD<String> synt = jsc.textFile(synthetic, 1);
 		
 		//Eclat.runEclat(jsc, transmapped, 1);
-		Apriori.runApriori(jsc, transmapped, 2);
+		//Apriori.runApriori(jsc, transmapped, 3);
 		//FPGrowthRunner.runFPGrowth(trans, 0.2, 1, frequentItemsPath);
 		
 		jsc.stop();

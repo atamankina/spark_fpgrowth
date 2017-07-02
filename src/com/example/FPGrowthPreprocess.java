@@ -86,8 +86,8 @@ public class FPGrowthPreprocess {
 		
 		 BiMap<String, String> biMap = HashBiMap.create();
 		 biMap.putAll(valuesMap);
-		 System.out.println("POST"+biMap.get("POST"));
-		 System.out.println("16"+biMap.inverse().get("16"));
+		 //System.out.println("POST"+biMap.get("POST"));
+		 //System.out.println("16"+biMap.inverse().get("16"));
 		
 		
 		/** create tuples transaction id - integer item id*/
@@ -102,14 +102,14 @@ public class FPGrowthPreprocess {
 		
 		
 		/** reduce pairs to transactions by transaction id */
-		JavaPairRDD<String, String> transactionTuples = transactionKeys.reduceByKey(
+		JavaPairRDD<String, String> transactionTuples = pairs.reduceByKey(
 					(String x, String y) -> x + " " + y
 					);
-		transactionTuples.saveAsTextFile(transTuplesPath);
+		//transactionTuples.saveAsTextFile(transTuplesPath);
 		
 		/** extract transaction values, remove transaction ids */
 		JavaRDD<String> transactionValues = transactionTuples.values();
-		transactionValues.saveAsTextFile(transValuesPath);
+		//transactionValues.saveAsTextFile(transValuesPath);
 		
 		/** transform each transaction to a list of items */
 		JavaRDD<List<String>> transactions = transactionValues.map(
@@ -124,7 +124,7 @@ public class FPGrowthPreprocess {
 		//transactions.saveAsTextFile(transactionsPath);
 		
 		/** FPGrowth */
-		FPGrowth fpg = new FPGrowth().setMinSupport(0.2).setNumPartitions(1);
+		FPGrowth fpg = new FPGrowth().setMinSupport(0.1).setNumPartitions(1);
 		FPGrowthModel<String> model = fpg.run(transactions);
 		JavaRDD<FPGrowth.FreqItemset<String>> frequentItems = model.freqItemsets().toJavaRDD();
 		

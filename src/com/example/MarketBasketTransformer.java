@@ -220,5 +220,25 @@ public class MarketBasketTransformer {
 		return transactionLists;
 		
 	}
+	
+	/**
+	 * @param inputPath
+	 * @param numPartitions
+	 * @param itemIdIndex
+	 * @return
+	 */
+	public JavaPairRDD<String, Integer> countUniquValues
+		(String inputPath, int numPartitions, int itemIdIndex){
+	
+		JavaPairRDD<String, Integer> uniqueValues = this.cutOffHeader(inputPath, numPartitions)
+				.mapToPair(
+				(String line) -> {
+					String[] lines = line.split(",");
+	    			return new Tuple2<> (lines[itemIdIndex], 1);	
+				}).reduceByKey(
+				(Integer x, Integer y) -> x + y	);
+		return uniqueValues;
+		
+	}
 
 }

@@ -67,7 +67,7 @@ public class FPGrowthPreprocess {
 /*		JavaRDD<String> allvalues = pairs.values();
 		allvalues.saveAsTextFile(pairsPath);*/
 		
-		/** get the list of unique items*/
+		/** get the list of unique items*//*
 		JavaRDD<String> uniqueValues = data.mapToPair(
 					(String line) -> {
 						String[] lines = line.split(",");
@@ -76,7 +76,7 @@ public class FPGrowthPreprocess {
 					(Integer x, Integer y) -> x + y		
 							).keys();
 		
-		/** create map of unique items and integer keys assigned to them*/
+		*//** create map of unique items and integer keys assigned to them*//*
 		Map<String, String> valuesMap = uniqueValues.mapToPair(
 					(String key) -> {
 						Integer valInt = mapkey++;
@@ -90,15 +90,15 @@ public class FPGrowthPreprocess {
 		 //System.out.println("16"+biMap.inverse().get("16"));
 		
 		
-		/** create tuples transaction id - integer item id*/
+		*//** create tuples transaction id - integer item id*//*
 		JavaPairRDD<String, String> transactionKeys = data.mapToPair(
 				(String line) ->{
 						String[] lines = line.split(",");
 						String key = valuesMap.get(lines[1]);
 		    			return new Tuple2<>(lines[0], key);	
-				});
+				});*/
 		
-		transactionKeys.saveAsTextFile(pairsPath);
+		//transactionKeys.saveAsTextFile(pairsPath);
 		
 		
 		/** reduce pairs to transactions by transaction id */
@@ -121,10 +121,10 @@ public class FPGrowthPreprocess {
 				        }
 			        return entries;
 					});
-		//transactions.saveAsTextFile(transactionsPath);
+		transactions.saveAsTextFile(transactionsPath);
 		
 		/** FPGrowth */
-		FPGrowth fpg = new FPGrowth().setMinSupport(0.1).setNumPartitions(1);
+		FPGrowth fpg = new FPGrowth().setMinSupport(0.08).setNumPartitions(1);
 		FPGrowthModel<String> model = fpg.run(transactions);
 		JavaRDD<FPGrowth.FreqItemset<String>> frequentItems = model.freqItemsets().toJavaRDD();
 		

@@ -23,9 +23,9 @@ import scala.Tuple2;
 public class MarketBasketTransformer {
 	
 	public static JavaSparkContext jsc;
-	private static Map<String, String> valuesMap;
+	public static Map<String, String> valuesMap;
 	public static BiMap<String, String> valuesBiMap;
-	private static Integer mapkey = 1;
+	public static Integer mapkey = 1;
 
 	
 	
@@ -48,7 +48,7 @@ public class MarketBasketTransformer {
 	 * @param numPartitions
 	 * @return
 	 */
-	private JavaRDD<String> cutOffHeader(String inputPath, int numPartitions){
+	public JavaRDD<String> cutOffHeader(String inputPath, int numPartitions){
 		
 		JavaRDD<String> input = jsc.textFile(inputPath, numPartitions);
 		String header = input.first();
@@ -127,7 +127,7 @@ public class MarketBasketTransformer {
 	 * @param itemIdIndex
 	 * @return
 	 */
-	private JavaPairRDD<String, String> transformToTransactionTuples
+	public JavaPairRDD<String, String> transformToTransactionTuples
 		(String inputPath, int numPartitions, int transIdIndex, int itemIdIndex){
 		
 		JavaPairRDD<String, String> transactionTuples = 
@@ -164,7 +164,33 @@ public class MarketBasketTransformer {
 	 * @param itemIdIndex
 	 * @return
 	 */
-	private JavaPairRDD<String, String> transformToTransactionTuplesMapped
+	public JavaRDD<List<String>> transformToMarketBasketLists
+		(String inputPath, int numPartitions, int transIdIndex, int itemIdIndex){
+		
+		JavaRDD<List<String>> transactionLists = this
+				.transformToMarketBasketLines(inputPath, numPartitions, transIdIndex, itemIdIndex)
+				.map((String line) -> {
+					String[] lines = line.split(" ");
+					List<String> entries = new ArrayList<String>();
+				        for(String item:lines){
+				    	    if(!entries.contains(item)) entries.add(item);
+				        }
+			        return entries;
+					});
+		
+		
+		return transactionLists;
+		
+	}
+	
+	/**
+	 * @param inputPath
+	 * @param numPartitions
+	 * @param transIdIndex
+	 * @param itemIdIndex
+	 * @return
+	 */
+	public JavaPairRDD<String, String> transformToTransactionTuplesMapped
 		(String inputPath, int numPartitions, int transIdIndex, int itemIdIndex){
 		
 		
@@ -194,33 +220,7 @@ public class MarketBasketTransformer {
 		
 		return transactionValuesMapped;
 	}
-	
-	/**
-	 * @param inputPath
-	 * @param numPartitions
-	 * @param transIdIndex
-	 * @param itemIdIndex
-	 * @return
-	 */
-	public JavaRDD<List<String>> transformToMarketBasketLists
-		(String inputPath, int numPartitions, int transIdIndex, int itemIdIndex){
-		
-		JavaRDD<List<String>> transactionLists = this
-				.transformToMarketBasketLines(inputPath, numPartitions, transIdIndex, itemIdIndex)
-				.map((String line) -> {
-					String[] lines = line.split(" ");
-					List<String> entries = new ArrayList<String>();
-				        for(String item:lines){
-				    	    if(!entries.contains(item)) entries.add(item);
-				        }
-			        return entries;
-					});
-		
-		
-		return transactionLists;
-		
-	}
-	
+
 	/**
 	 * @param inputPath
 	 * @param numPartitions
